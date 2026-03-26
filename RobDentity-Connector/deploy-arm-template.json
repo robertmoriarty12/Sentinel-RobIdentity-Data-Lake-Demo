@@ -1,0 +1,195 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "workspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of your existing Log Analytics / Sentinel workspace"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Azure region for all resources"
+      }
+    }
+  },
+  "variables": {
+    "dceName": "robdentity-dce",
+    "dcrName": "RobDentity-DCR",
+    "rawEventsTableName": "RobDentity_RawEvents_CL",
+    "findingsTableName": "RobDentity_Findings_CL",
+    "rawEventsStreamName": "Custom-RobDentity_RawEvents_CL",
+    "findingsStreamName": "Custom-RobDentity_Findings_CL",
+    "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Insights/dataCollectionEndpoints",
+      "apiVersion": "2022-06-01",
+      "name": "[variables('dceName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "networkAcls": {
+          "publicNetworkAccess": "Enabled"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.OperationalInsights/workspaces/tables",
+      "apiVersion": "2022-10-01",
+      "name": "[concat(parameters('workspaceName'), '/', variables('rawEventsTableName'))]",
+      "properties": {
+        "schema": {
+          "name": "[variables('rawEventsTableName')]",
+          "columns": [
+            { "name": "TimeGenerated",            "type": "datetime" },
+            { "name": "createdDateTime",         "type": "datetime" },
+            { "name": "UserPrincipalName",        "type": "string" },
+            { "name": "UserId",                   "type": "string" },
+            { "name": "EventType",                "type": "string" },
+            { "name": "LoginGeo_Country",         "type": "string" },
+            { "name": "LoginGeo_City",            "type": "string" },
+            { "name": "IPAddress",                "type": "string" },
+            { "name": "AuthNetworkCategory",      "type": "string" },
+            { "name": "DeviceId",                 "type": "string" },
+            { "name": "DeviceTrustType",          "type": "string" },
+            { "name": "DevicePlatform",           "type": "string" },
+            { "name": "ApplicationAccessed",      "type": "string" },
+            { "name": "ResourceAccessed",         "type": "string" },
+            { "name": "AuthMethod",               "type": "string" },
+            { "name": "MFAResult",                "type": "string" },
+            { "name": "DataVolumeKB",             "type": "long" },
+            { "name": "SessionDurationSeconds",   "type": "long" },
+            { "name": "RolesHeldAtTime",          "type": "dynamic" },
+            { "name": "RobDentity_RiskScore",     "type": "real" },
+            { "name": "RobDentity_EventFlag",     "type": "string" }
+          ]
+        },
+        "retentionInDays": 365
+      }
+    },
+    {
+      "type": "Microsoft.OperationalInsights/workspaces/tables",
+      "apiVersion": "2022-10-01",
+      "name": "[concat(parameters('workspaceName'), '/', variables('findingsTableName'))]",
+      "properties": {
+        "schema": {
+          "name": "[variables('findingsTableName')]",
+          "columns": [
+            { "name": "TimeGenerated",            "type": "datetime" },
+            { "name": "createdDateTime",          "type": "datetime" },
+            { "name": "UserPrincipalName",        "type": "string" },
+            { "name": "FindingId",                "type": "string" },
+            { "name": "FindingType",              "type": "string" },
+            { "name": "Severity",                 "type": "string" },
+            { "name": "Description",              "type": "string" },
+            { "name": "TriggeredBy",              "type": "string" },
+            { "name": "RobDentity_WindowUsed",    "type": "string" },
+            { "name": "Confidence",               "type": "real" },
+            { "name": "Disposition",              "type": "string" }
+          ]
+        },
+        "retentionInDays": 365
+      }
+    },
+    {
+      "type": "Microsoft.Insights/dataCollectionRules",
+      "apiVersion": "2022-06-01",
+      "name": "[variables('dcrName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/dataCollectionEndpoints', variables('dceName'))]",
+        "[resourceId('Microsoft.OperationalInsights/workspaces/tables', parameters('workspaceName'), variables('rawEventsTableName'))]",
+        "[resourceId('Microsoft.OperationalInsights/workspaces/tables', parameters('workspaceName'), variables('findingsTableName'))]"
+      ],
+      "properties": {
+        "dataCollectionEndpointId": "[resourceId('Microsoft.Insights/dataCollectionEndpoints', variables('dceName'))]",
+        "streamDeclarations": {
+          "Custom-RobDentity_RawEvents_CL": {
+            "columns": [
+              { "name": "TimeGenerated",          "type": "datetime" },
+              { "name": "createdDateTime",        "type": "datetime" },
+              { "name": "UserPrincipalName",      "type": "string" },
+              { "name": "UserId",                 "type": "string" },
+              { "name": "EventType",              "type": "string" },
+              { "name": "LoginGeo_Country",       "type": "string" },
+              { "name": "LoginGeo_City",          "type": "string" },
+              { "name": "IPAddress",              "type": "string" },
+              { "name": "AuthNetworkCategory",    "type": "string" },
+              { "name": "DeviceId",               "type": "string" },
+              { "name": "DeviceTrustType",        "type": "string" },
+              { "name": "DevicePlatform",         "type": "string" },
+              { "name": "ApplicationAccessed",    "type": "string" },
+              { "name": "ResourceAccessed",       "type": "string" },
+              { "name": "AuthMethod",             "type": "string" },
+              { "name": "MFAResult",              "type": "string" },
+              { "name": "DataVolumeKB",           "type": "long" },
+              { "name": "SessionDurationSeconds", "type": "long" },
+              { "name": "RolesHeldAtTime",        "type": "dynamic" },
+              { "name": "RobDentity_RiskScore",   "type": "real" },
+              { "name": "RobDentity_EventFlag",   "type": "string" }
+            ]
+          },
+          "Custom-RobDentity_Findings_CL": {
+            "columns": [
+              { "name": "TimeGenerated",          "type": "datetime" },
+              { "name": "createdDateTime",        "type": "datetime" },
+              { "name": "UserPrincipalName",      "type": "string" },
+              { "name": "FindingId",              "type": "string" },
+              { "name": "FindingType",            "type": "string" },
+              { "name": "Severity",               "type": "string" },
+              { "name": "Description",            "type": "string" },
+              { "name": "TriggeredBy",            "type": "string" },
+              { "name": "RobDentity_WindowUsed",  "type": "string" },
+              { "name": "Confidence",             "type": "real" },
+              { "name": "Disposition",            "type": "string" }
+            ]
+          }
+        },
+        "destinations": {
+          "logAnalytics": [
+            {
+              "workspaceResourceId": "[variables('workspaceResourceId')]",
+              "name": "sentinelDestination"
+            }
+          ]
+        },
+        "dataFlows": [
+          {
+            "streams": [ "Custom-RobDentity_RawEvents_CL" ],
+            "destinations": [ "sentinelDestination" ],
+            "transformKql": "source",
+            "outputStream": "Custom-RobDentity_RawEvents_CL"
+          },
+          {
+            "streams": [ "Custom-RobDentity_Findings_CL" ],
+            "destinations": [ "sentinelDestination" ],
+            "transformKql": "source",
+            "outputStream": "Custom-RobDentity_Findings_CL"
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": {
+    "dataCollectionEndpointUrl": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Insights/dataCollectionEndpoints', variables('dceName'))).logsIngestion.endpoint]"
+    },
+    "dataCollectionRuleImmutableId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Insights/dataCollectionRules', variables('dcrName'))).immutableId]"
+    },
+    "rawEventsStreamName": {
+      "type": "string",
+      "value": "[variables('rawEventsStreamName')]"
+    },
+    "findingsStreamName": {
+      "type": "string",
+      "value": "[variables('findingsStreamName')]"
+    }
+  }
+}

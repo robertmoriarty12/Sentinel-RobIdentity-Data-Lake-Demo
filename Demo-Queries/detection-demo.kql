@@ -1,0 +1,151 @@
+// ═══════════════════════════════════════════════════════════════════════════
+// ROBDENTITY × SENTINEL DATA LAKE — DETECTION DEMO QUERIES
+//
+// Run these in order in Sentinel Data Lake Exploration.
+// Tables available now: RobDentity_RawEvents_CL, RobDentity_Findings_CL
+// The story: alex.smith@contoso.com — staged persistence, Sep 2025 → Mar 2026
+// ═══════════════════════════════════════════════════════════════════════════
+
+
+// ───────────────────────────────────────────────────────────────────────────
+// QUERY 1 — THE ISV'S VIEW: What RobDentity's engine knows (30-day window)
+//
+// Result: 3 findings, 2 dismissed as noise, 1 open Medium.
+// Without history, this is a routine alert. No action taken.
+// This is what every ISV is stuck with today.
+// ───────────────────────────────────────────────────────────────────────────
+RobDentity_Findings_CL
+| where UserPrincipalName == "alex.smith@contoso.com"
+| project createdDateTime, FindingId, Severity, FindingType, Disposition, RobDentity_WindowUsed, Confidence, Description
+| order by createdDateTime asc
+
+
+// ───────────────────────────────────────────────────────────────────────────
+// QUERY 2 — 12-MONTH RISK TRAJECTORY
+//
+// The boiling frog. Average risk climbs from ~12 to ~60+ over 7 months.
+// No single month looks alarming. The pattern is only visible at scale.
+// RobDentity's 30-day engine can never see this curve.
+// ───────────────────────────────────────────────────────────────────────────
+RobDentity_RawEvents_CL
+| where UserPrincipalName == "alex.smith@contoso.com"
+| summarize
+    AvgRisk             = round(avg(RobDentity_RiskScore), 1),
+    MaxRisk             = round(max(RobDentity_RiskScore), 1),
+    OffHoursSessions    = countif(hourofday(createdDateTime) < 6 or hourofday(createdDateTime) >= 22),
+    UniqueCountries     = dcount(LoginGeo_Country),
+    DatacenterIPLogins  = countif(AuthNetworkCategory == "DatacenterIP"),
+    UnmanagedDeviceSessions = countif(DeviceTrustType == "Unmanaged"),
+    MaxDataVolumeKB     = max(DataVolumeKB),
+    FlaggedEvents       = countif(RobDentity_EventFlag in ("Suspicious", "Critical"))
+    by Month = format_datetime(startofmonth(createdDateTime), "yyyy-MM")
+| order by Month asc
+
+
+// ───────────────────────────────────────────────────────────────────────────
+// QUERY 3 — BASELINE vs DRIFT: The inflection point
+//
+// Six months of clean Chicago/CorporateVPN/Windows behavior.
+// Then September 1, 2025. Everything changes — slowly, deliberately.
+// ───────────────────────────────────────────────────────────────────────────
+RobDentity_RawEvents_CL
+| where UserPrincipalName == "alex.smith@contoso.com"
+| extend Period = iff(createdDateTime < datetime(2025-09-01), "1 — Baseline (Mar–Aug 2025)", "2 — Drift (Sep 2025–Mar 2026)")
+| summarize
+    AvgRisk             = round(avg(RobDentity_RiskScore), 1),
+    UniqueCountries     = dcount(LoginGeo_Country),
+    Countries           = make_set(LoginGeo_Country),
+    UnmanagedSessions   = countif(DeviceTrustType == "Unmanaged"),
+    DatacenterIPSessions = countif(AuthNetworkCategory == "DatacenterIP"),
+    OffHoursSessions    = countif(hourofday(createdDateTime) < 6 or hourofday(createdDateTime) >= 22),
+    TotalDataVolumeKB   = sum(DataVolumeKB),
+    SuspiciousEvents    = countif(RobDentity_EventFlag in ("Suspicious", "Critical"))
+    by Period
+| order by Period asc
+
+
+// ───────────────────────────────────────────────────────────────────────────
+// QUERY 4 — THREE USERS SIDE BY SIDE
+//
+// sam.lee also traveled internationally. priya.nair changed nothing.
+// Only alex.smith shows compounding multi-vector drift.
+// This is what separates compromise from legitimate behavior.
+// ───────────────────────────────────────────────────────────────────────────
+RobDentity_RawEvents_CL
+| where createdDateTime >= datetime(2025-09-01)
+| summarize
+    AvgRisk             = round(avg(RobDentity_RiskScore), 1),
+    UniqueCountries     = dcount(LoginGeo_Country),
+    UnmanagedSessions   = countif(DeviceTrustType == "Unmanaged"),
+    DatacenterIPSessions = countif(AuthNetworkCategory == "DatacenterIP"),
+    OffHoursSessions    = countif(hourofday(createdDateTime) < 6 or hourofday(createdDateTime) >= 22),
+    MaxDataVolumeKB     = max(DataVolumeKB)
+    by UserPrincipalName
+| extend Verdict = case(
+    AvgRisk > 40 and UnmanagedSessions > 5 and DatacenterIPSessions > 5, "⚠ COMPROMISED",
+    AvgRisk > 20 and UniqueCountries > 1, "✓ Benign travel — no escalation",
+    "✓ Clean baseline"
+)
+| order by AvgRisk desc
+
+
+// ───────────────────────────────────────────────────────────────────────────
+// QUERY 5 — THE DETECTION
+//
+// The output a detection agent produces after reading 12 months.
+// This is the finding RobDentity's engine could never generate.
+// Risk delta, campaign duration, privilege escalation count, exfil evidence.
+// ───────────────────────────────────────────────────────────────────────────
+let BaselineStart   = datetime(2025-03-25);
+let InflectionDate  = datetime(2025-09-01);
+let DetectionDate   = datetime(2026-03-26);
+let TargetUser      = "alex.smith@contoso.com";
+let Baseline = RobDentity_RawEvents_CL
+| where UserPrincipalName == TargetUser and createdDateTime >= BaselineStart and createdDateTime < InflectionDate
+| summarize
+    Baseline_AvgRisk           = round(avg(RobDentity_RiskScore), 1),
+    Baseline_Countries         = make_set(LoginGeo_Country),
+    Baseline_OffHours          = countif(hourofday(createdDateTime) < 6 or hourofday(createdDateTime) >= 22),
+    Baseline_MaxDataKB         = max(DataVolumeKB),
+    Baseline_UnmanagedSessions = countif(DeviceTrustType == "Unmanaged")
+| extend _key = 1;
+let Drift = RobDentity_RawEvents_CL
+| where UserPrincipalName == TargetUser and createdDateTime >= InflectionDate and createdDateTime <= DetectionDate
+| summarize
+    Drift_AvgRisk           = round(avg(RobDentity_RiskScore), 1),
+    Drift_Countries         = make_set(LoginGeo_Country),
+    Drift_OffHours          = countif(hourofday(createdDateTime) < 6 or hourofday(createdDateTime) >= 22),
+    Drift_MaxDataKB         = max(DataVolumeKB),
+    Drift_UnmanagedSessions = countif(DeviceTrustType == "Unmanaged"),
+    Drift_DatacenterIP      = countif(AuthNetworkCategory == "DatacenterIP")
+| extend _key = 1;
+Baseline
+| join kind=inner Drift on _key
+| project-away _key, _key1
+| extend
+    Entity                  = TargetUser,
+    DetectionType           = "StagedIdentityPersistence",
+    Severity                = "Critical",
+    Confidence              = "High",
+    CampaignStart           = "2025-09-01",
+    CampaignDuration        = "7 months",
+    RiskDelta               = round(Drift_AvgRisk - Baseline_AvgRisk, 1),
+    OffHoursDelta           = Drift_OffHours - Baseline_OffHours,
+    DataVolumeDelta_KB      = Drift_MaxDataKB - Baseline_MaxDataKB,
+    PrivilegeEscalations    = 4,    // Storage Reader → KV Secrets → Backup Contributor → Subscription Contributor
+    ISVFindings_Dismissed   = 2,    // Oct Low, Dec Medium — RobDentity saw noise, not a campaign
+    ISVFindings_Open        = 1,    // Feb 2026 Medium — the only signal in 30-day window
+    ImpossibleIn30Days      = true,
+    CorroboratedBy          = "Entra ID Protection (unmanaged Linux, Frankfurt, Sep 1), Azure RBAC (4 escalations), MDE (az.exe/azcopy.exe to 185.220.101.47 at 02:47 UTC)",
+    AgentConclusion         = "Staged persistence campaign confirmed. Attacker established foothold via unmanaged Linux device Sep 1 2025, acquired 4 privileges over 4 months, conducted bulk data exfiltration via azcopy Mar 10 2026. RobDentity dismissed 2 prior signals as noise — insufficient history. 12-month baseline makes this unambiguous. Recommend immediate account suspension and IR engagement."
+| project
+    Entity, DetectionType, Severity, Confidence,
+    CampaignStart, CampaignDuration,
+    Baseline_AvgRisk, Drift_AvgRisk, RiskDelta,
+    Baseline_Countries, Drift_Countries,
+    Drift_UnmanagedSessions, Drift_DatacenterIP,
+    PrivilegeEscalations,
+    DataVolumeDelta_KB,
+    ISVFindings_Dismissed, ISVFindings_Open,
+    ImpossibleIn30Days, CorroboratedBy,
+    AgentConclusion

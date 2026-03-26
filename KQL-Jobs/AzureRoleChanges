@@ -1,0 +1,17 @@
+datatable(
+    createdDateTime:    datetime,
+    UserPrincipalName:  string,
+    UserId:             string,
+    RoleDefinitionName: string,
+    RoleDefinitionId:   string,
+    Scope:              string,
+    OperationType:      string,
+    InitiatedBy:        string,
+    CorrelationId:      string
+)
+[
+    datetime(2025-09-05T16:22:00Z), "alex.smith@contoso.com", "usr-entra-alex-001", "Storage Blob Data Reader", "2a2b1b6e-b8b4-4b0d-b4d6-d6e2f4c8a1e2", "/subscriptions/sub-contoso-prod/resourceGroups/rg-corp-shared/providers/Microsoft.Storage/storageAccounts/stgprodbackup01", "Add", "admin.ops@contoso.com", "corr-rbac-sep-001",
+    datetime(2025-10-17T11:05:00Z), "alex.smith@contoso.com", "usr-entra-alex-001", "Key Vault Secrets User", "4633458b-17de-408a-b874-0445c86b69e6", "/subscriptions/sub-contoso-prod/resourceGroups/rg-corp-shared/providers/Microsoft.KeyVault/vaults/kv-contoso-prod", "Add", "admin.ops@contoso.com", "corr-rbac-oct-002",
+    datetime(2025-11-29T14:38:00Z), "alex.smith@contoso.com", "usr-entra-alex-001", "Backup Contributor", "9980e02c-c2be-4d73-94e8-173b1dc7cf3c", "/subscriptions/sub-contoso-prod/resourceGroups/rg-corp-backup", "Add", "admin.ops@contoso.com", "corr-rbac-nov-003",
+    datetime(2026-01-14T09:15:00Z), "alex.smith@contoso.com", "usr-entra-alex-001", "Contributor", "b24988ac-6180-42a0-ab88-20f7382dd24c", "/subscriptions/sub-contoso-prod", "Add", "admin.ops@contoso.com", "corr-rbac-jan-004"
+]

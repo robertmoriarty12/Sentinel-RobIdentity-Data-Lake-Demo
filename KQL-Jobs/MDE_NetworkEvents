@@ -1,0 +1,32 @@
+datatable(
+    createdDateTime:              datetime,
+    DeviceName:                   string,
+    DeviceId:                     string,
+    AccountName:                  string,
+    AccountDomain:                string,
+    ActionType:                   string,
+    RemoteIP:                     string,
+    RemotePort:                   int,
+    RemoteUrl:                    string,
+    LocalIP:                      string,
+    LocalPort:                    int,
+    Protocol:                     string,
+    InitiatingProcessFileName:    string,
+    InitiatingProcessCommandLine: string,
+    InitiatingProcessAccountName: string
+)
+[
+    datetime(2025-04-09T10:22:00Z), "DESKTOP-ALEX-CORP", "dev-win-alex-001", "alex.smith", "contoso.com", "ConnectionSuccess", "52.114.75.32", 443, "teams.microsoft.com", "10.0.1.54", 55201, "TCP", "Teams.exe", "Teams.exe --process-start-args", "alex.smith",
+    datetime(2025-06-14T14:05:00Z), "DESKTOP-ALEX-CORP", "dev-win-alex-001", "alex.smith", "contoso.com", "ConnectionSuccess", "20.190.128.10", 443, "login.microsoftonline.com", "10.0.1.54", 55340, "TCP", "msedge.exe", "msedge.exe --no-sandbox", "alex.smith",
+    datetime(2025-08-20T09:47:00Z), "DESKTOP-ALEX-CORP", "dev-win-alex-001", "alex.smith", "contoso.com", "ConnectionSuccess", "13.107.6.156", 443, "sharepoint.com", "10.0.1.54", 55812, "TCP", "msedge.exe", "msedge.exe --no-sandbox", "alex.smith",
+    datetime(2025-09-01T02:47:00Z), "DESKTOP-ALEX-CORP", "dev-win-alex-001", "alex.smith", "contoso.com", "ConnectionSuccess", "185.220.101.47", 443, "", "10.0.1.54", 56001, "TCP", "az.exe", "az storage blob download-batch --destination .", "alex.smith",
+    datetime(2025-09-14T03:12:00Z), "DESKTOP-ALEX-CORP", "dev-win-alex-001", "alex.smith", "contoso.com", "ConnectionSuccess", "185.220.101.47", 443, "", "10.0.1.54", 56108, "TCP", "az.exe", "az keyvault secret list --vault-name kv-contoso-prod", "alex.smith",
+    datetime(2025-10-08T01:33:00Z), "DESKTOP-ALEX-CORP", "dev-win-alex-001", "alex.smith", "contoso.com", "ConnectionSuccess", "45.154.98.12", 443, "", "10.0.1.54", 56220, "TCP", "az.exe", "az backup vault list", "alex.smith",
+    datetime(2025-11-22T02:58:00Z), "DESKTOP-ALEX-CORP", "dev-win-alex-001", "alex.smith", "contoso.com", "ConnectionSuccess", "45.154.98.12", 443, "", "10.0.1.54", 56344, "TCP", "az.exe", "az backup item list --vault-name BackupVault --resource-group rg-corp-backup", "alex.smith",
+    datetime(2025-12-17T02:41:00Z), "DESKTOP-ALEX-CORP", "dev-win-alex-001", "alex.smith", "contoso.com", "ConnectionSuccess", "91.108.4.51", 443, "", "10.0.1.54", 56490, "TCP", "azcopy.exe", "azcopy copy stgprodbackup01/backups ./local-backup --recursive", "alex.smith",
+    datetime(2026-01-09T04:05:00Z), "DESKTOP-ALEX-CORP", "dev-win-alex-001", "alex.smith", "contoso.com", "ConnectionSuccess", "91.108.4.51", 443, "", "10.0.1.54", 56601, "TCP", "azcopy.exe", "azcopy copy stgprodbackup01/backups ./export-jan --recursive", "alex.smith",
+    datetime(2026-02-18T03:22:00Z), "DESKTOP-ALEX-CORP", "dev-win-alex-001", "alex.smith", "contoso.com", "ConnectionSuccess", "185.220.101.47", 443, "", "10.0.1.54", 56744, "TCP", "azcopy.exe", "azcopy copy stgprodbackup01/2025-backups ./export-feb --recursive", "alex.smith",
+    datetime(2026-03-10T02:55:00Z), "DESKTOP-ALEX-CORP", "dev-win-alex-001", "alex.smith", "contoso.com", "ConnectionSuccess", "91.108.4.51", 443, "", "10.0.1.54", 56890, "TCP", "azcopy.exe", "azcopy copy stgprodbackup01/ ./full-export --recursive", "alex.smith",
+    datetime(2025-11-10T14:30:00Z), "MACBOOK-SAM-CORP", "dev-mac-sam-001", "sam.lee", "contoso.com", "ConnectionSuccess", "13.107.6.156", 443, "teams.microsoft.com", "10.0.2.31", 54100, "TCP", "Teams", "Teams --startup", "sam.lee",
+    datetime(2025-09-22T09:10:00Z), "DESKTOP-PRIYA-CORP", "dev-win-priya-001", "priya.nair", "contoso.com", "ConnectionSuccess", "52.114.75.32", 443, "teams.microsoft.com", "10.0.3.18", 54200, "TCP", "Teams.exe", "Teams.exe --process-start-args", "priya.nair"
+]
