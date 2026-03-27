@@ -4,7 +4,7 @@
 
 > *RobDentity's own detection engine saw a medium-severity anomaly in February 2026. The agent read 12 months of RobDentity's raw telemetry in Sentinel — the same data RobDentity generated but couldn't retain — and found a staged persistence campaign that started in September 2025. Entra, Azure Activity, and MDE independently confirm every signal. The detection is impossible in 30 days. It's unambiguous at 12 months.*
 
-## The ISV Problem
+## The Problem
 
 RobDentity is an identity risk management platform. Like Entra ID Protection and most identity SaaS vendors, **RobDentity retains raw identity telemetry for only 30 days**. Their detection engine operates within that window. This is not unique to RobDentity — it is the default retention posture of the identity SaaS market.
 
